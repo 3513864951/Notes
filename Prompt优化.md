@@ -2,7 +2,7 @@
 
 ![Screenshot_20230517_195347](https://voyager0587.oss-cn-guangzhou.aliyuncs.com/%E7%AC%94%E8%AE%B0%E5%9B%BE%E7%89%87/202306041533065.jpg)
 
-## Prompt优化原理
+## Prompt优化原理 
 
 ![Screenshot_20230517_195543](https://voyager0587.oss-cn-guangzhou.aliyuncs.com/%E7%AC%94%E8%AE%B0%E5%9B%BE%E7%89%87/202306041533648.jpg)
 
