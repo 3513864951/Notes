@@ -13,7 +13,6 @@
 ```java
 buildFeatures {
     dataBinding true
-
 }
 ```
 
