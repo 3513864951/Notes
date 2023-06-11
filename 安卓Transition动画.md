@@ -6,7 +6,7 @@
 
 > `Explode` 的效果是下一个页面的元素从四面八方进入，最终形成完整的页面。 
 
-<font color="orange"><b>代码：</b></font> 
+<font color="orange"><b>代码：</b></font>  
 
 + 初始Activity中的代码：
 
