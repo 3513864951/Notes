@@ -40,7 +40,7 @@ Call<User> getUser(@Path("id") int userId);
 
 在上面的例子中，`{id}` 是 URL 中的占位符，其值由 `@Path("id")` 中的参数提供。当调用 `getUser(1)` 时，Retrofit 会将 URL 替换为 `users/1`。
 
-- `@Query`：用于添加查询参数，例如：
+- `@Query`：用于添加查询参数，用于`GET`例如：
 
 ```java
 @GET("users")
@@ -51,7 +51,9 @@ Call<List<User>> getUsers(@Query("sort") String sortBy, @Query("order") String o
 
 因此，`@Path` 和 `@Query` 的区别在于，前者用于替换 URL 中的占位符，后者用于添加查询参数。
 
++ `@Field`，功能跟`@Query`一样，区别在于@Field常用于`POST`
 
+  
 
 #### 单例模式
 
@@ -82,3 +84,70 @@ public static HttpUtil getInstance() {
 > 单例模式通过将类的构造方法私有化，防止外部代码创建新的实例，同时提供一个全局访问点（通常是一个静态方法），使得外部代码可以获取该类的唯一实例。由于该实例是全局唯一的，因此可以在整个应用程序中共享该实例，避免了重复创建对象和数据不一致的问题。
 >
 > 需要注意的是，单例模式并不是适用于所有的场景，过度使用单例模式可能会导致代码耦合度过高、单例对象生命周期过长等问题，因此需要根据具体场景进行选择和设计。
+
+#### 添加Header
+
+（1）使用注解的方式
+
+添加一个Header参数
+
+```java
+public interface UserService {  
+    @Headers("Cache-Control: max-age=640000")
+    @GET("/tasks")
+    Call<List<Task>> getTasks();
+}
+```
+
+添加多个Header参数
+
+```java
+public interface UserService {  
+    @Headers({
+        "Accept: application/vnd.yourapi.v1.full+json",
+        "User-Agent: Your-App-Name"
+    })
+    @GET("/tasks/{task_id}")
+    Call<Task> getTask(@Path("task_id") long taskId);
+}
+```
+
+（2）使用代码的方式，则需要使用拦截器
+
+
+```java
+OkHttpClient.Builder httpClient = new OkHttpClient.Builder();  
+httpClient.addInterceptor(new Interceptor() {  
+    @Override
+    public Response intercept(Interceptor.Chain chain) throws IOException {
+        Request original = chain.request(); 
+   Request request = original.newBuilder()
+        .header("User-Agent", "Your-App-Name")
+        .header("Accept", "application/vnd.yourapi.v1.full+json")
+        .method(original.method(), original.body())
+        .build();
+ 
+    return chain.proceed(request);
+}
+    }
+
+OkHttpClient client = httpClient.build();  
+Retrofit retrofit = new Retrofit.Builder()  
+    .baseUrl(API_BASE_URL)
+    .addConverterFactory(GsonConverterFactory.create())
+    .client(client)
+    .build();
+
+
+```
+（3）使用注解的方式，但是Header参数每次提交的都不同，也就是动态的Header
+
+```java
+public interface UserService {  
+    @GET("/tasks")
+    Call<List<Task>> getTasks(@Header("Content-Range") String contentRange);
+}
+```
+
+#### 获取Cookie
+
