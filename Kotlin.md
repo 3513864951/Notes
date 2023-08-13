@@ -50,6 +50,17 @@ class Student(val sno: String, val grade: Int, name: String, age: Int) :
 >
 > 希望我的分析能为你解惑!如果还有任何疑惑,欢迎随时提问:)
 
+```kotlin
+MainActivity.class
+MainActivity::class.java
+```
+
+
+
+
+
+
+
 ### 空指针
 
 #### 可空类型系统
@@ -217,7 +228,7 @@ fun doStudy(study: Study?) {
 
 分析以上代码：`?.`操作符表示对象为空时什么都不做，对象不为空时就调用`let`函数，而`let`函数会将study对象本身作为参数传递到Lambda表达式中，此时的study对象肯定不为空。
 
-这段代码还可以继续简化，Lambda有一个特性：当Lambda表达式的参数列表中只有一个参数时，可以不用声明参数名，直接使用it关键字来代替即可，那么代码就可以进一步简化成：
+这段代码还可以继续简化，Lambda有一个特性：**当Lambda表达式的参数列表中只有一个参数时，可以不用声明参数名，直接使用`it`关键字来代替即可**，那么代码就可以进一步简化成：
 
 ```kotlin
 fun doStudy(study: Study?) {
@@ -348,6 +359,53 @@ class Student(val sno: String = "", val grade: Int = 0, name: String = "", age: 
 
 ```kotlin
 XXXActivity.actionStart(this,data1,data2)
+```
+
+```kotlin
+inline fun <reified T> startActivity(context: Context) {
+     val intent = Intent(context, T::class.java)
+     context.startActivity(intent)
+}
+```
+
+如果我们想要启动TestActivity，只需要这样写就可以了：
+
+```kotlin
+startActivity<TestActivity>(context)
+```
+
+不过，现在的startActivity()函数其实还是有问题的，因为通常在启用Activity的时候还可能会使用Intent附带一些参数，比如下面的写法：
+
+```kotlin
+val intent = Intent(context, TestActivity::class.java)
+intent.putExtra("param1", "data")
+intent.putExtra("param2", 123)
+context.startActivity(intent)
+```
+
+这个问题也不难解决，只需要借助之前在第6章学习的高阶函数就可以轻松搞定。回到reified.kt文件当中，这里添加一个新的startActivity()函数重载，如下所示：
+
+```kotlin
+inline fun <reified T> startActivity(context: Context, block: Intent.() -> Unit) {
+ val intent = Intent(context, T::class.java)
+
+ intent.block()
+
+ context.startActivity(intent)
+
+}
+```
+
+可以看到，这次的startActivity()函数中增加了一个函数类型参数，并且它的函数类型是定义在Intent类当中的。在创建完Intent的实例之后，随即调用该函数类型参数，并把Intent的实例传入，这样调用startActivity()函数的时候就可以在Lambda表达式中为Intent传递参数了，如下所示：
+
+```kotlin
+startActivity<TestActivity>(context) {
+
+ putExtra("param1", "data")
+
+ putExtra("param2", 123)
+
+}
 ```
 
 ### 标准函数和静态方法
@@ -943,6 +1001,214 @@ println(money4.value)
 
 ### 高阶函数详解
 
+> 高阶函数的定义：如果一个函数接收另一个函数作为**参数**，或者**返回值的类型**是另一个函数，那么该函数就称为高阶函数。
+
+函数类型的语法规则是有点特殊的，基本规则如下：
+
+```kotlin
+(String, Int) -> Unit
+```
+
+> **`->左边`**的部分就是用来声明该函数接收什么参数的，多个参数之间使用逗号隔开，如果不接收任何参数，写一对空括号就可以了。而**`->右边`**的部分用于声明该函数的返回值是什么类型，如果没有返回值就使用Unit，它大致相当于Java中的void。
+
+
+
+在将上述函数类型添加到某个函数的参数声明或者返回值声明上，那么这个函数就是一个高阶函数了，如下所示：
+
+```kotlin
+fun example(func: (String, Int) -> Unit) {
+
+ func("hello", 123)
+
+}
+```
+
+这里的example()函数接收了一个函数类型的参数，因此example()函数就是一个高阶函数。而调用一个函数类型的参数，它的语法类似于调用一个普通的函数，只需要在参数名的后面加上一对括号，并在括号中传入必要的参数即可。
+
+**由于高阶函数的用途：**这里如果要让我简单概括一下的话，那就是高阶函数允许让函数类型的参数来决定函数的执行逻辑。即使是同一个高阶函数，只要传入不同的函数类型参数，那么它的执行逻辑和最终的返回结果就可能是完全不同的。
+
+**例如：**定义一个叫作`num1AndNum2()`的高阶函数，并让它接收两个整型和一个函数类型的参数。我们会在`num1AndNum2()`函数中对传入的两个整型参数进行某种运算，并返回最终的运算结果，但是具体进行什么运算是由传入的函数类型参数决定的。
+
+```kotlin
+fun num1AndNum2(num1: Int, num2: Int, operation: (Int, Int) -> Int): Int {
+ val result = operation(num1, num2)
+ return result
+}
+```
+
+此Kotlin还支持其他多种方式来调用高阶函数，比如Lambda表达式、匿名函数、成员引用等。其中，**Lambda表达式是最常见也是最普遍的高阶函数调用方式**，也是我们接下来要重点学习的内容。
+
+先给出一段代码：
+
+```kotlin
+fun plus(num1: Int, num2: Int): Int {
+ 	return num1 + num2
+}
+fun minus(num1: Int, num2: Int): Int {
+ 	return num1 - num2
+}
+fun main() {
+     val num1 = 100
+     val num2 = 80
+     val result1 = num1AndNum2(num1, num2, ::plus)
+     val result2 = num1AndNum2(num1, num2, ::minus)
+     println("result1 is $result1")
+     println("result2 is $result2")
+}
+
+```
+
+> 注意这里调用num1AndNum2()函数的方式，第三个参数使用了::plus和::minus这种写法。这是一种函数引用方式的写法，表示将plus()和minus()函数作为参数传递给num1AndNum2()函数。
+
+上面的代码通过Lambda表达式可以转化为：
+
+```kotlin
+fun main() {
+     val num1 = 100
+     val num2 = 80
+     val result1 = num1AndNum2(num1, num2) { n1, n2 ->
+     	n1 + n2
+     }
+     val result2 = num1AndNum2(num1, num2) { n1, n2 ->
+     	n1 - n2
+     }
+     println("result1 is $result1")
+     println("result2 is $result2")
+}
+```
+
+Lambda表达式同样可以完整地表达一个函数的参数声明和返回值声明（**Lambda表达式中的最后一行代码会自动作为返回值**），但是写法却更加精简。
+
+------------------
+
+回顾之前在第3章学习的`apply`函数，它可以用于给Lambda表达式提供一个指定的上下文，当需要连续调用同一个对象的多个方法时，apply函数可以让代码变得更加精简，比如StringBuilder就是一个典型的例子。接下来我们就使用高阶函数模仿实现一个类似的功能。
+
+```kotlin
+fun StringBuilder.build(block: StringBuilder.() -> Unit): StringBuilder {
+     block()
+     return this
+}
+```
+
+> 具体分解:
+>
+> - `StringBuilder.()`:
+>   表示lambda可以直接访问定义它的StringBuilder对象的成员,如append()等方法。
+> - `()`:
+>   lambda形参列表为空,不需要传入参数。
+> - `-> Unit`:
+>   lambda函数体执行结束后没有返回值,返回类型为Unit。
+
+这里我们给StringBuilder类定义了一个build扩展函数，这个扩展函数接收一个**函数类型参数**，并且**返回值类型**也是StringBuilder。
+
+注意，这个函数类型参数的声明方式和我们前面学习的语法有所不同：它在函数类型的前面加上了一个`StringBuilder. `的语法结构。这是什么意思呢？**其实这才是定义高阶函数完整的语法规则，在函数类型的前面加上`ClassName.` 就表示这个函数类型是定义在哪个类当中的。**
+
+那么这里将函数类型定义到StringBuilder类当中有什么好处呢？好处就是当我们调用build函数时传入的Lambda表达式将会自动拥有StringBuilder的上下文，同时这也是apply函数的实现方式。
+
+现在我们就可以使用自己创建的build函数来简化StringBuilder构建字符串的方式了。这里仍然用吃水果这个功能来举例：
+
+```kotlin
+fun main() {
+
+     val list = listOf("Apple", "Banana", "Orange", "Pear", "Grape")
+
+     val result = StringBuilder().build {
+
+         append("Start eating fruits.\n")
+
+         for (fruit in list) {
+
+            append(fruit).append("\n")
+
+         }
+
+         append("Ate all fruits.")
+
+     }
+
+    println(result.toString())
+
+}
+```
+
+可以看到，build函数的用法和apply函数基本上是一模一样的，只不过我们编写的build函数目前只能作用在StringBuilder类上面，而apply函数是可以作用在所有类上面的。如果想实现apply函数的这个功能，需要借助于Kotlin的泛型才行。
+
+### 内联函数的作用(TODO)
+
+
+
+
+
+### 八、泛型和委托
+
+#### 泛型的基本用法
+
+> 在一般的编程模式下，我们需要给任何一个变量指定一个具体的类型，而泛型允许我们在不指定具体类型的情况下进行编程，这样编写出来的代码将会拥有更好的扩展性。
+
+**泛型主要有两种定义方式：一种是定义泛型类，另一种是定义泛型方法，使用的语法结构都是<T>。**当然括号内的T并不是固定要求的，事实上你使用任何英文字母或单词都可以，但是通常情况下，T是一种约定俗成的泛型写法。
+
+如果我们要**定义一个泛型类**，就可以这么写：
+
+```kotlin
+class MyClass<T> {
+
+ fun method(param: T): T {
+
+ return param
+
+ }
+}
+```
+
+此时的MyClass就是一个泛型类，MyClass中的方法允许使用T类型的参数和返回值。**如果我们不想定义一个泛型类，只是想定义一个泛型方法**，应该要怎么写呢？也很简单，只需要将定义泛型的语法结构写在方法上面就可以了，如下所示：
+
+```kotlin
+class MyClass {
+
+ fun <T> method(param: T): T {
+
+ return param
+
+ }
+
+}
+```
+
+此时的调用方式也需要进行相应的调整：
+
+```kotlin
+val myClass = MyClass()
+
+val result = myClass.method<Int>(123)
+```
+
+由于Kotlin还拥有非常出色的类型推导机制，例如我们传入了一个Int类型的参数，它能够自动推导出泛型的类型就是Int型，因此这里也**可以直接省略泛型的指定：**
+
+```kotlin
+val myClass = MyClass()
+val result = myClass.method(123)
+```
+
+**Kotlin还允许我们对泛型的类型进行限制。**目前你可以将method()方法的泛型指定成任意类
+
+型，但是如果这并不是你想要的话，还可以通过指定上界的方式来对泛型的类型进行约束，比
+
+如这里将method()方法的泛型上界设置为Number类型，如下所示：
+
+```kotlin
+class MyClass {
+
+ fun <T : Number> method(param: T): T {
+     
+ return param
+     
+ }
+}
+```
+
+这种写法就表明，我们只能将method()方法的泛型指定成数字类型，比如Int、Float、Double等。但是如果你指定成字符串类型，就肯定会报错，因为它不是一个数字。另外，**在默认情况下，所有的泛型都是可以指定成可空类型的，这是因为在不手动指定上界的时候，泛型的上界默认是Any?。而如果想要让泛型的类型不可为空，只需要将泛型的上界手动指定成Any就可以了。**
+
+#### 类委托和委托属性
 
 
 
@@ -950,10 +1216,14 @@ println(money4.value)
 
 
 
+### 十一、使用协程编写高效的并发程序
 
+#### 协程的基本用法
 
+##### 引入依赖：
 
-
-
-
+```kotlin
+ implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.1.1"
+ implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.1.1"
+```
 
