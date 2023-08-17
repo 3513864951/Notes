@@ -57,10 +57,6 @@ MainActivity::class.java
 
 
 
-
-
-
-
 ### 空指针
 
 #### 可空类型系统
@@ -1212,6 +1208,26 @@ class MyClass {
 
 
 
+### 十、泛型的高级属性
+
+#### 对泛型进行实化
+
+> 意思就是在编译时期让编译器识别出来泛型具体的种类(Int,String)，而不是不知道泛型的类型，比如List<T>在运行的时候只知道这是个List而不知道T的类型。
+>
+> Kotlin提供了内联函数，就是调用一个内联函数时，先把参数传到原函数中，然后再将原函数的逻辑传到调用内联函数的地方
+
+##### 工作原理：
+
+
+
+![image-20230816225320863](https://voyager0587.oss-cn-guangzhou.aliyuncs.com/%E7%AC%94%E8%AE%B0%E5%9B%BE%E7%89%87/202308162253099.png)
+
+
+
+
+
+
+
 
 
 
@@ -1226,4 +1242,299 @@ class MyClass {
  implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.1.1"
  implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.1.1"
 ```
+
+
+
+### 十三、高级程序开发组件
+
+#### 13.4 LiveData
+
+##### 13.4.1 基本用法
+
+> LiveData可以包含任何类型的数据，并在数据发生变化的时候通知给观察者。也就是说，如果我们将计数器的计数使用LiveData来包装，然后在Activity中去观察它，就可以主动将数据变化通知给Activity了。
+
+①修改`MainViewModel`中的代码，添加`MutableLiveData`：
+
+```kotlin
+class MainViewModel(countReserved: Int) : ViewModel() {
+    
+     val counter = MutableLiveData<Int>()
+    
+     init {
+         counter.value = countReserved
+     }
+    
+     fun plusOne() {
+         //注意调用LiveData的getValue()方法所获得的数据是可能为空的，因此这里使用了一个?:操作符
+         val count = counter.value ?: 0
+         counter.value = count + 1
+     }
+    
+     fun clear() {
+         counter.value = 0
+     }
+}
+```
+
+> 这里我们将counter变量修改成了一个`MutableLiveData`对象，并指定它的泛型为Int，表示它包含的是整型数据。
+>
+> **MutableLiveData是一种可变的LiveData，它的用法很简单，主要有3种读写数据的方法，分别是getValue()、setValue()和postValue()方法。**
+>
+> getValue()方法用于获取LiveData中包含的数据；setValue()方法用于给LiveData设置数据，但是只能在主线程中调用；postValue()方法用于在非主线程中给LiveData设置数据。而上述代码其实就是调用getValue()和setValue()方法对应的语法糖写法。
+
+②在`MainActivity`中添加`MutableLiveData`数据的监听：
+
+```kotlin
+class MainActivity : AppCompatActivity() {
+     ...
+     override fun onCreate(savedInstanceState: Bundle?) {
+         ...
+         plusOneBtn.setOnClickListener {
+             viewModel.plusOne()
+         }
+         
+         clearBtn.setOnClickListener {
+             viewModel.clear()
+         }
+         
+         viewModel.counter.observe(this, Observer { count ->
+             infoText.text = count.toString()
+         })
+     }
+     override fun onPause() {
+         super.onPause()
+         sp.edit {
+         	putInt("count_reserved", viewModel.counter.value ?: 0)
+         }
+
+     }
+}
+```
+
+> 调用`viewModel.counter的observe()`方法来观察数据的变化。经过对MainViewModel的改造，现在counter变量已经变成了一个LiveData对象，任
+>
+> 何LiveData对象都可以调用它的observe()方法来观察数据的变化。
+>
+> `observe()`方法接收两个参数：
+>
+> + **第一个参数**是一个LifecycleOwner对象，而Activity本身就是一个LifecycleOwner对象，因此直接传this就好；
+>
+> + **第二个参数**是一个Observer接口，当counter中包含的数据发生变化时，就会回调到这里，因此我们在这里将最新的计数更新到界面上即可。
+>
+> 
+>
+> <span style="background-color:Darkorange ;"><b>注意：</b></span>如果你需要在子线程中给LiveData设置数据，一定要调用postValue()方法，而不能再使用setValue()方法，否则会发生崩溃。
+
+> 对observe()方法的语法扩展。我们只需要在app/build.gradle文件中添加如下依赖：
+>
+> ```kotlin
+> dependencies {
+>  ...
+> 
+>  implementation "androidx.lifecycle:lifecycle-livedata-ktx:2.2.0"
+> 
+> }
+> ```
+>
+> 上面的observe函数的写法就可以变成·：
+>
+> ```kotlin
+> viewModel.counter.observe(this) { count ->
+>  	infoText.text = count.toString()
+> }
+> ```
+>
+> 虽说现在的写法可以正常工作，但其实这仍然不是最规范的LiveData用法，主要的问题就在于我们将counter这个可变的LiveData暴露给了外部。这样
+>
+> 即使是在ViewModel的外面也是可以给counter设置数据的，从而破坏了ViewModel数据的封装性，同时也可能带来一定的风险。
+>
+> 改造`MainViewModel`来实现这样的功能：
+>
+> ```kotlin
+> class MainViewModel(countReserved: Int) : ViewModel() {
+> 
+>      val counter: LiveData<Int>
+>      get() = _counter
+> 	 //调用viewModel.getCounter()方法返回的是_count
+>     
+>      private val _counter = MutableLiveData<Int>()
+> 
+>      init {
+>      	_counter.value = countReserved
+>      }
+>     
+>      fun plusOne() {
+>          val num = _counter.value ?: 0
+>          _counter.value = num + 1
+>      }
+>     
+>      fun clear() {
+>          _counter.value = 0
+>      }
+> }
+> ```
+>
+> 先将原来的counter变量改名为\_counter变量，并给它加上private修饰符，这样\_counter变量对于外部就是不可见的了。然后我们又新定义了一个counter变量，将它的类型声明为不可变的LiveData，并在它的get()属性方法中返回\_counter变量。这样，当外部调用counter变量时，实际上获得的就是_counter的实例，但是无法给counter设置数据，从而保证了ViewModel的数据封装性
+>
+> 
+
+##### 13.4.2 **map**和**switchMap**
+
+> 当项目变得复杂之后，可能会出现一些更加特殊的需求。LiveData为了能够应对各种不同的需求场景，提供了两种转换方法：map()和switchMap()方法。
+
+###### `map()`方法
+
+假如说有一个`User`类：
+
+```kotlin
+data class User(var firstName: String, var lastName: String, var age: Int)
+```
+
+接着在MainViewModel创建一个相应的LiveData来包含User类型的数据：
+
+```kotlin
+class MainViewModel(countReserved: Int) : ViewModel() {
+     val userLiveData = MutableLiveData<User>()
+     ...
+}
+```
+
+但如果在Activity中我们只要求显式用户的姓名，其他的并不需要，再将整个User类型的LiveData暴露到外部就不合适了。
+
+因此接下来就要运用到`map()`方法了：
+
+```kotlin
+class MainViewModel(countReserved: Int) : ViewModel() {
+    
+     private val userLiveData = MutableLiveData<User>()
+    
+      val userName: LiveData<String> = Transformations.map(userLiveData) { user ->
+         "${user.firstName} ${user.lastName}"//姓和名
+     }
+    
+     ...
+}   
+```
+
+> 这里我们调用了Transformations的map()方法来对LiveData的数据类型进行转换。
+>
+> map()方法接收两个参数：
+>
+> + 第一个参数是原始的LiveData对象；
+> + 第二个参数是一个转换函数，我们在转换函数里编写具体的转换逻辑即可。这里的逻辑也很简单，就是将User对象转换成一个只包含用户姓名的字符串。
+
+###### `switchMap()`
+
+> 虽然它的使用场景非常固定，但是可能比map()方法要更加常用。
+>
+> 前面我们所学的所有内容都有一个**前提**：LiveData对象的实例都是在ViewModel中创建的。然而在实际的项目中，不可能一直是这种理想情况，很有可能**ViewModel中的某个LiveData对象是调用另外的方法获取的。**
+
+①新建一个Repository单例类
+
+```kotlin
+object Repository {
+    
+     fun getUser(userId: String): LiveData<User> {
+         
+         val liveData = MutableLiveData<User>()
+         
+         liveData.value = User(userId, userId, 0)
+         
+         return liveData
+     }
+    
+}
+```
+
+> 我们在Repository类中添加了一个getUser()方法，这个方法接收一个userId参数。按照正常的编程逻辑，我们应该根据传入的userId参数去服务器请求或者到数据库中查找相应的User对象，但是这里只是模拟示例，因此每次将传入的userId当作用户姓名来创建一个新的User对象即可。
+>
+> getUser()方法返回的是一个包含User数据的LiveData对象，而且**每次调用getUser()方法都会返回一个新的LiveData实例。**
+
+②我们在MainViewModel中也定义一个getUser()方法，并且让它调用Repository的getUser()方法来获取LiveData对象：
+
+```kotlin
+class MainViewModel(countReserved: Int) : ViewModel() {
+     ...
+     fun getUser(userId: String): LiveData<User> {
+     	return Repository.getUser(userId)
+      }
+}
+```
+
+接下来的问题就是，在Activity中如何观察LiveData的数据变化呢？这个时候，switchMap()方法就可以派上用场了。
+
+它的使用场景非常固定：<span style="background-color:#a2e043;"><b>如果ViewModel中的某个LiveData对象是调用另外的方法获取的，那么我们就可以借助switchMap()方法，将这个LiveData对象转换成另外一个可观察的LiveData对象。</b></span>
+
+③
+
+```kotlin
+class MainViewModel(countReserved: Int) : ViewModel() {
+     ...
+     private val userIdLiveData = MutableLiveData<String>()
+    
+     val user: LiveData<User> = Transformations.switchMap(userIdLiveData) { userId ->
+     	Repository.getUser(userId)
+     }
+    
+     fun getUser(userId: String) {
+         userIdLiveData.value = userId
+     }
+}
+```
+
+> switchMap()方法同样接收两个参数：
+>
+> + **第一个参数传入我们新增的userIdLiveData，switchMap()方法会对它进行观察**；
+> + 第二个参数是一个转换函数，注意，我们必须在这个转换函数中返回一个LiveData对象，因为switchMap()方法的工作原理就是要将转换函数中返回的LiveData对象转换成另一个可观察的LiveData对象。
+
+**工作流程：**
+
+首先，当外部调用MainViewModel的getUser()方法来获取用户数据时，并不会发起任何请求或者函数调用，只会将传入的userId值设置到userIdLiveData当中。而一旦userIdLiveData的数据发生变化，那么观察userIdLiveData的switchMap()方法就会执行，并且调用我们编写的转换函数。然后在转换函数中调用Repository.getUser()方法获取真正的用户数据。同时，switchMap()方法会将Repository.getUser()方法返回的LiveData对象转换成一个可观察的LiveData对象，对于Activity而言，只要去观察这个LiveData对象`user`就可以了。
+
+**Activity中的代码：**
+
+```kotlin
+     ...
+viewModel.getUser(userId)
+     ...
+
+viewModel.user.observe(this, Observer { user ->
+     infoText.text = user.firstName
+ })
+```
+
+当ViewModel中某个获取数据的方法有可能是没有参数的时应该怎么写呢？
+
+其实跟上面的差不多：
+
+```kotlin
+class MyViewModel : ViewModel() {
+    
+     private val refreshLiveData = MutableLiveData<Any?>()
+    
+     val refreshResult = Transformations.switchMap(refreshLiveData) {//没有声明refreshResult的具体类型，而是依靠kotlind
+         Repository.refresh() // 假设Repository中已经定义了refresh()方法
+     }
+    
+     fun refresh() {
+         refreshLiveData.value = refreshLiveData.value
+     }
+}
+```
+
+> 这里我们定义了一个不带参数的`refresh()`方法，又对应地定义了一个refreshLiveData，但是它不需要指定具体包含的数据类型，因此这里我们将LiveData的泛型指定成`Any?`即可。
+>
+> 接下来就是点睛之笔的地方了，在refresh()方法中，我们只是将refreshLiveData原有的数据取出来（默认是空），再重新设置到refreshLiveData当中，这样就能触发一次数据变化。**<font color=orange>是的，LiveData内部不会判断即将设置的数据和原有数据是否相同，只要调用了setValue()或postValue()方法，就一定会触发数据变化事件。</font>**然后我们在Activity中观察refreshResult这个LiveData对象即可，这样只要调用了refresh()方法，观察者的回调函数中就能够得到最新的数据。
+
+
+
+
+
+
+
+
+
+
+
+
 

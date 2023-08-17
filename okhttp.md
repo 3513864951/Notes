@@ -1,3 +1,5 @@
+### @FormUrlEncoded
+
 **@FormUrlEncoded**：它的作用是将请求体中的数据编码为键值对的形式，以便服务器可以正确地解析请求数据。这个注解通常与@POST或@PUT等HTTP方法注解一起使用。
 
 
@@ -12,13 +14,22 @@
 >
 > 需要注意的是，这里的返回类型是 `Call<ResponseBody>`，表示服务器响应的数据类型为 `ResponseBody`，即原始的响应体。在实际应用中，我们可能需要将响应体转换成其他类型的数据，如 JSON 或 Java 对象。此时，可以使用 Retrofit 提供的转换器来完成相应的转换操作。
 
+### @Query
 
 
 
-
+> ```css
+> GET http://example.com/get_data.json?u=<user>&t=<token>
+> 这是一种标准的带参数GET请求的格式。接口地址的最后使用问号来连接参数部分，每个参数都
+> 是一个使用等号连接的键值对，多个参数之间使用“&”符号进行分隔。那么很显然，在上述地址
+> 中，服务器要求我们传入user和token这两个参数的值。对于这种格式的服务器接口，我们可
+> 以使用刚才所学的@Path注解的方式来解决，但是这样会有些麻烦，Retrofit针对这种带参数的
+> GET请求，专门提供了一种语法支持：
+> ```
+>
 > ```java
->  @GET("user")
->  Call<ResponseBody> getData2(@Query("id") long idLon, @Query("name") String nameStr);
+> @GET("user")
+> Call<ResponseBody> getData2(@Query("id") long idLon, @Query("name") String nameStr);
 > ```
 >
 > 这个方法使用了 Retrofit 库的注解来定义一个 GET 请求，请求的路径是 "user"。其中包含两个参数：idLon 和 nameStr，分别对应着请求中的 "id" 和 "name" 参数。这个方法返回一个 Call 对象，泛型为 ResponseBody，用于处理请求的响应结果。 
@@ -27,7 +38,7 @@
 
 
 
-+ **Retrofit中@Path和@Query 的区别**
+### **Retrofit中@Path和@Query 的区别**
 
 `@Path` 和 `@Query` 都是 Retrofit 中用于构建 URL 的注解，但它们的作用有所不同。
 
@@ -40,7 +51,7 @@ Call<User> getUser(@Path("id") int userId);
 
 在上面的例子中，`{id}` 是 URL 中的占位符，其值由 `@Path("id")` 中的参数提供。当调用 `getUser(1)` 时，Retrofit 会将 URL 替换为 `users/1`。
 
-- `@Query`：用于添加查询参数，用于`GET`例如：
+- `@Query`：用于添加查询参数（链接中出现`?`)，用于`GET`例如：
 
 ```java
 @GET("users")
@@ -54,6 +65,76 @@ Call<List<User>> getUsers(@Query("sort") String sortBy, @Query("order") String o
 + `@Field`，功能跟`@Query`一样，区别在于@Field常用于`POST`
 
   
+  
+  而Retrofit对所有常用的HTTP请求类型都进行了支持，使用@GET、@POST、@PUT、@PATCH、@DELETE注解，就可以让Retrofit发出相应类型的请求了。
+  
+  比如服务器提供了如下接口地址：
+  
+  DELETE http://example.com/data/<id>
+  
+  这种接口通常意味着要根据id删除一条指定的数据，而我们在Retrofit当中想要发出这种请求就
+  
+  可以这样写：
+  
+  ```kotlin
+  interface ExampleService {
+  
+   @DELETE("data/{id}")
+  
+   fun deleteData(@Path("id") id: String): Call<ResponseBody>
+  
+  }
+  ```
+  
+  这里使用了@DELETE注解来发出DELETE类型的请求，并使用了@Path注解来动态指定id，这些都很好理解。但是在返回值声明的时候，我们将Call的泛型指定成了ResponseBody，这是什么意思呢？
+  
+  **由于`POST、PUT 、PATCH、DELETE`这几种请求类型与GET请求不同，它们更多是用于操作服务器上的数据，而不是获取服务器上的数据，所以通常它们对于服务器响应的数据并不关心。这个时候就可以使用ResponseBody，表示Retrofit能够接收任意类型的响应数据，并且不会对响应数据进行解析。**
+
+### @header
+
+有些服务器接口还可能会要求我们在HTTP请求的header中指定参数，比如：
+
+```css
+GET http://example.com/get_data.json
+
+User-Agent: okhttp
+
+Cache-Control: max-age=0
+```
+
+这些header参数其实就是一个个的键值对，我们可以在Retrofit中直接使用@Headers注解来
+
+对它们进行声明。
+
+```kotlin
+interface ExampleService {
+
+ @Headers("User-Agent: okhttp", "Cache-Control: max-age=0")
+
+ @GET("get_data.json")
+
+ fun getData(): Call<Data>
+
+}
+```
+
+但是这种写法只能进行静态header声明，如果想要动态指定header的值，则需要使用
+
+`@Header`注解，如下所示：
+
+```kotlin
+interface ExampleService {
+
+ @GET("get_data.json")
+
+ fun getData(@Header("User-Agent") userAgent: String,
+
+ @Header("Cache-Control") cacheControl: String): Call<Data>
+
+}
+```
+
+
 
 #### 单例模式
 
