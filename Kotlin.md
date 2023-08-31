@@ -57,6 +57,12 @@ MainActivity::class.java
 
 
 
+
+
+### val
+
+在 Kotlin 中，`val` 是用来声明只读属性（read-only property）的关键字。`val` 声明的属性是不可变的，一旦初始化后就不能再被修改。
+
 ### 空指针
 
 #### 可空类型系统
