@@ -1619,7 +1619,7 @@ if(::myLateInitVar.isInitialized) {
 
 与`lateinit` 相比，懒惰委托支持一个 [自定义的setter和getter](https://link.juejin.cn?target=https%3A%2F%2Fkotlinlang.org%2Fapi%2Flatest%2Fjvm%2Fstdlib%2Fkotlin%2Flazy.html)，允许它在读写值时进行中间操作。
 
-#### 时刻记住
+##### 时刻记住
 
 懒惰初始化是一种委托，它只初始化一次东西，而且只在它被调用的时候。它是为了避免不必要的对象创建。
 
@@ -1627,7 +1627,46 @@ if(::myLateInitVar.isInitialized) {
 
 你可以利用它的自定义getter和setter在读写值时进行中间操作。我也更喜欢将其用于不可变类型，因为我觉得它在整个程序中保持不变的情况下效果最好。
 
+### 抽象类和`interface`的区别
 
+#### **抽象类 (Abstract Class)**
 
+1. 抽象类可以包含具体实现的方法和抽象方法。也就是说，抽象类可以同时包含部分完整实现和部分未实现的代码。
+2. 抽象类可以有非抽象的子类。这意味着子类可以选择重写父类中的所有抽象方法，也可以选择只重写一部分。
+3. 抽象类不能被实例化，只能被继承。
 
+例如：
 
+```kotlin
+abstract class Animal {
+    abstract fun makeSound()
+    fun eat() {
+        println("The animal is eating")
+    }
+}
+
+```
+
+#### **接口 (Interface)**
+
+1. 接口在 Kotlin 中并不像在一些其他语言（如 Java）中那样常用。在 Java 中，接口通常用于定义一个类的行为，而不包括任何实现。在 Kotlin 中，我们通常更倾向于使用抽象类来定义部分实现的类。
+2. 接口在 Kotlin 中更像是一种类型声明，它只包含抽象方法的声明，没有具体的实现。
+3. 接口可以被多个类实现，实现接口的类需要实现接口中声明的所有方法。
+4. 接口不能包含字段或具体的方法实现。
+
+例如：
+
+```kotlin
+interface Flyable {
+    fun fly()
+}
+
+```
+
+**总结**
+
+总的来说，`abstract` 和 `interface` 的主要区别在于：
+
+- 抽象类可以包含具体的实现，而接口只包含方法的声明。
+- 抽象类不能被直接实例化，而接口不能包含具体的实现。
+- 抽象类更适合用来定义部分实现的类，而接口更适合用来定义行为的契约。
