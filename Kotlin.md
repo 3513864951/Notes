@@ -284,6 +284,31 @@ val price = 1299.99
 println("Cellphone(brand=$brand, price=$price)")
 ```
 
+### private set
+
+在Kotlin中，可以使用`private set`来指定属性的 setter 方法为私有的。这意味着只有在类内部才能访问和修改该属性的值。以下是一个示例：
+
+```kotlin
+class Person {
+    var name: String = ""
+        private set
+
+    fun changeName(newName: String) {
+        name = newName
+    }
+}
+
+fun main() {
+    val person = Person()
+    person.changeName("John")
+    println(person.name) // 输出：John
+
+    person.name = "Jane" // 编译错误，无法访问私有的 setter 方法
+}
+```
+
+在上面的示例中，`name`属性的 setter 方法被标记为私有的，因此在`main`函数中无法直接访问和修改`name`属性的值。但是可以通过`changeName`方法来修改`name`属性的值。
+
 ### 函数的参数默认值
 
 我们可以在定义函数的时候给任意参数设定一个默认值，这样当调用此函数时就不会强制要求调用方为此参数传值，在没有传值的情况下会自动使用参数的默认值。
