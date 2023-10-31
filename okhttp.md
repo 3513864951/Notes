@@ -13,6 +13,8 @@
 > 这段代码是一个使用 Retrofit 进行 POST 请求的示例。其中，使用了注解 `@FormUrlEncoded` 表示请求体的编码格式为表单形式，即 `application/x-www-form-urlencoded`。接着，使用注解 `@POST("user/emails")` 指定了请求的 URL 地址为 `user/emails`。最后，使用注解 `@Field` 分别指定了两个表单字段 `name` 和 `sex` 的值，并将它们作为参数传入方法中。这样，在调用 `getPostData2` 方法时，Retrofit 会自动将这两个字段的值封装到请求体中，并发送给服务器。
 >
 > 需要注意的是，这里的返回类型是 `Call<ResponseBody>`，表示服务器响应的数据类型为 `ResponseBody`，即原始的响应体。在实际应用中，我们可能需要将响应体转换成其他类型的数据，如 JSON 或 Java 对象。此时，可以使用 Retrofit 提供的转换器来完成相应的转换操作。
+>
+> 
 
 ### @Query
 
