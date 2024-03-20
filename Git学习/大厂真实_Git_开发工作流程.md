@@ -329,7 +329,8 @@ Git 从发布至今，已经发展了近 20 年，在这期间衍生了成百上
 
 
 
-_**点击关注公众号，”技术干货” 及时达！**_
-===========================================
 
-本文转自 <https://mp.weixin.qq.com/s?__biz=MzU2NjU3Nzg2Mg==&mid=2247512229&idx=1&sn=7c4aa5ab8f2a7f25512e299c3c27b22b&chksm=fca8af0ccbdf261adf5ad11c20d3a24c5796f0888ea35b6db01b909e8335b1178eb9b3d161cd&mpshare=1&scene=23&srcid=0303ZdAJDtRxpJsNDffiwsA4&sharer_shareinfo=46a268e5c359281fda7b4299b42874df&sharer_shareinfo_first=46a268e5c359281fda7b4299b42874df#rd>，如有侵权，请联系删除。
+
+本文转自
+
+<https://mp.weixin.qq.com/s?__biz=MzU2NjU3Nzg2Mg==&mid=2247512229&idx=1&sn=7c4aa5ab8f2a7f25512e299c3c27b22b&chksm=fca8af0ccbdf261adf5ad11c20d3a24c5796f0888ea35b6db01b909e8335b1178eb9b3d161cd&mpshare=1&scene=23&srcid=0303ZdAJDtRxpJsNDffiwsA4&sharer_shareinfo=46a268e5c359281fda7b4299b42874df&sharer_shareinfo_first=46a268e5c359281fda7b4299b42874df#rd>，如有侵权，请联系删除。
