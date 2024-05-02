@@ -205,3 +205,15 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
 </layout>
 ```
 
+仍然出现点击空白区域点到了另一个fragment的控件的话：
+
+```kotlin
+当前fragment的最外层控件的id.setOnClickLisener{
+    
+}
+```
+
+
+
+
+
