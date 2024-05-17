@@ -67,7 +67,7 @@
         "id": "noi:chatgpt",
         "parent": "noi@ai",
         "text": "ChatGPT",
-        "url": "https://chat.openai.com"
+        "url": "https://chatgpt.com"
       },
       {
         "id": "noi:claude",
